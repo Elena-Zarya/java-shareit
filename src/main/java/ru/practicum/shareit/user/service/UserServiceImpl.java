@@ -13,7 +13,6 @@ import ru.practicum.shareit.user.storage.UserStorage;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -21,7 +20,6 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
     private final UserStorage userStorage;
     private final UserMapper userMapper;
-    private long id;
 
     @Override
     public UserDto addUser(UserDto userDto) {
@@ -39,57 +37,41 @@ public class UserServiceImpl implements UserService {
             log.info("email " + email + " already exist");
             throw new EmailAlreadyExistException("email " + email + " already exist");
         }
-        if (userId == 0) {
-            userId = generateId();
-            user.setId(userId);
-        }
-        User userSaved = userStorage.save(user, userId);
+        User userSaved = userStorage.save(user);
         return userMapper.userToDto(userSaved);
     }
 
     @Override
     public UserDto updateUser(UserDto userDto, long userId) {
-        if (checkUserId(userId)) {
-            String nameNew = userDto.getName();
-            String emailNew = userDto.getEmail();
-            User user = userStorage.findUserById(userId);
-            if (emailNew != null) {
-                if (checkEmail(emailNew, userId)) {
-                    log.info("email " + emailNew + " already exist");
-                    throw new EmailAlreadyExistException("email " + emailNew + " already exist");
-                }
-                user.setEmail(emailNew);
+        checkUserId(userId);
+        String nameNew = userDto.getName();
+        String emailNew = userDto.getEmail();
+        User user = userStorage.findUserById(userId);
+        if (emailNew != null) {
+            if (checkEmail(emailNew, userId)) {
+                log.info("email " + emailNew + " already exist");
+                throw new EmailAlreadyExistException("email " + emailNew + " already exist");
             }
-            if (nameNew != null) {
-                user.setName(nameNew);
-            }
-            User userSaved = userStorage.save(user, userId);
-            return userMapper.userToDto(userSaved);
-        } else {
-            log.info("User " + userId + " not found");
-            throw new NotFoundException("User " + userId + " not found");
+            user.setEmail(emailNew);
         }
+        if (nameNew != null) {
+            user.setName(nameNew);
+        }
+        User userSaved = userStorage.updateUser(user, userId);
+        return userMapper.userToDto(userSaved);
     }
 
     @Override
     public UserDto getUserById(long userId) {
-        if (checkUserId(userId)) {
-            User user = userStorage.getUserById(userId);
-            return userMapper.userToDto(user);
-        } else {
-            log.info("User " + userId + " not found");
-            throw new NotFoundException("User " + userId + " not found");
-        }
+        checkUserId(userId);
+        User user = userStorage.getUserById(userId);
+        return userMapper.userToDto(user);
     }
 
     @Override
     public void deleteUser(long userId) {
-        if (checkUserId(userId)) {
-            userStorage.deleteUser(userId);
-        } else {
-            log.info("User " + userId + " not found");
-            throw new NotFoundException("User " + userId + " not found");
-        }
+        checkUserId(userId);
+        userStorage.deleteUser(userId);
     }
 
     @Override
@@ -104,18 +86,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void addItem(long itemId, long userId) {
-        if (checkUserId(userId)) {
-            userStorage.getUserById(userId).getItemsList().add(itemId);
-            userStorage.setItemsByOwner(userId, userStorage.getUserById(userId).getItemsList());
+        checkUserId(userId);
+        userStorage.getUserById(userId).getItemsList().add(itemId);
+    }
+
+    public boolean checkUserId(long userId) {
+        if (userStorage.findAll().containsKey(userId)) {
+            return true;
         } else {
             log.info("User " + userId + " not found");
             throw new NotFoundException("User " + userId + " not found");
         }
-    }
-
-    @Override
-    public List<Long> getItemsByOwner(long ownerId) {
-        return userStorage.getItemsByOwner(ownerId);
     }
 
     private boolean checkEmail(String email, long userId) {
@@ -128,13 +109,5 @@ public class UserServiceImpl implements UserService {
             }
         }
         return false;
-    }
-
-    private boolean checkUserId(long userId) {
-        return userStorage.findAll().containsKey(userId);
-    }
-
-    private long generateId() {
-        return ++id;
     }
 }

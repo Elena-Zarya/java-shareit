@@ -10,7 +10,7 @@ import java.util.*;
 @Repository
 public class UserStorageImpl implements UserStorage {
     private final Map<Long, User> users = new HashMap<>();
-    private final Map<Long, List<Long>> itemsByOwner = new HashMap<>();
+    private long id;
 
     @Override
     public Map<Long, User> findAll() {
@@ -18,9 +18,17 @@ public class UserStorageImpl implements UserStorage {
     }
 
     @Override
-    public User save(User user, long userId) {
+    public User save(User user) {
+        generateId();
+        user.setId(id);
+        users.put(id, user);
+        return users.get(id);
+    }
+
+    @Override
+    public User updateUser(User user, long userId) {
         users.put(userId, user);
-        return user;
+        return users.get(userId);
     }
 
     @Override
@@ -45,13 +53,7 @@ public class UserStorageImpl implements UserStorage {
         }
     }
 
-    @Override
-    public void setItemsByOwner(long userId, List<Long> itemsList) {
-        itemsByOwner.put(userId, itemsList);
-    }
-
-    @Override
-    public List<Long> getItemsByOwner(long ownerId) {
-        return itemsByOwner.get(ownerId);
+    private long generateId() {
+        return ++id;
     }
 }

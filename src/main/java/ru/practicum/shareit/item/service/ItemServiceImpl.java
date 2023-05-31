@@ -25,13 +25,14 @@ public class ItemServiceImpl implements ItemService {
     private final UserService userService;
     private final ItemMapper itemMapper;
     private final UserMapper userMapper;
-    private long id;
+
 
     @Override
     public ItemDto addItem(ItemDto itemDto, long ownerId) {
         String description = itemDto.getDescription();
         String name = itemDto.getName();
         Boolean available = itemDto.getAvailable();
+        userService.checkUserId(ownerId);
         if (description == null || description.isEmpty()) {
             log.info("description is empty");
             throw new ValidationException("description is empty");
@@ -48,15 +49,13 @@ public class ItemServiceImpl implements ItemService {
             log.info("owner of the item is not specified");
             throw new ValidationException("owner of the item is not specified");
         }
-        if (userService.getUserById(ownerId) != null) {
-            generateId();
-        }
-        userService.addItem(id, ownerId);
-        UserDto owner = userService.getUserById(ownerId);
         Item item = itemMapper.dtoToItem(itemDto);
+        Item itemSaved = itemStorage.save(item);
+        long itemId = itemSaved.getId();
+        userService.addItem(itemId, ownerId);
+        UserDto owner = userService.getUserById(ownerId);
         item.setOwner(userMapper.dtoToUser(owner));
-        item.setId(id);
-        Item itemSaved = itemStorage.save(item, id);
+        itemStorage.setItemsByOwner(ownerId, owner.getItemsList());
         return itemMapper.itemToDto(itemSaved);
     }
 
@@ -76,7 +75,7 @@ public class ItemServiceImpl implements ItemService {
             if (availableNew != null) {
                 item.setAvailable(availableNew);
             }
-            Item itemSaved = itemStorage.save(item, itemId);
+            Item itemSaved = itemStorage.updateItem(item, itemId);
             return itemMapper.itemToDto(itemSaved);
         } else {
             log.info("user is not the owner of the item");
@@ -93,7 +92,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Collection<ItemDto> getAllItemByUser(long ownerId) {
         Collection<ItemDto> itemsByOwner = new ArrayList<>();
-        List<Long> itemsIdList = userService.getItemsByOwner(ownerId);
+        List<Long> itemsIdList = itemStorage.getItemsByOwner(ownerId);
         if (itemsIdList != null) {
             for (Long itemId : itemsIdList) {
                 itemsByOwner.add(itemMapper.itemToDto(itemStorage.findItemById(itemId)));
@@ -105,10 +104,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Collection<ItemDto> findItemsByText(String text) {
         Collection<ItemDto> itemsByText = new ArrayList<>();
-        if (text.isEmpty()) {
-            return itemsByText;
-        }
-        Collection<Item> allItems = itemStorage.getAllItems();
+        Collection<Item> allItems = text.isEmpty() ? new ArrayList<>() : itemStorage.getAllItems();
         for (Item item : allItems) {
             if (item.getAvailable() && (item.getName().toUpperCase().contains(text.toUpperCase())
                     || item.getDescription().toUpperCase().contains(text.toUpperCase()))) {
@@ -116,9 +112,5 @@ public class ItemServiceImpl implements ItemService {
             }
         }
         return itemsByText;
-    }
-
-    private long generateId() {
-        return ++id;
     }
 }

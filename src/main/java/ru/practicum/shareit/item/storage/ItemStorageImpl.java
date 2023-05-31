@@ -11,9 +11,19 @@ import java.util.*;
 @Repository
 public class ItemStorageImpl implements ItemStorage {
     Map<Long, Item> items = new HashMap<>();
+    private final Map<Long, List<Long>> itemsByOwner = new HashMap<>();
+    private long id;
 
     @Override
-    public Item save(Item item, long itemId) {
+    public Item save(Item item) {
+        generateId();
+        item.setId(id);
+        items.put(id, item);
+        return items.get(id);
+    }
+
+    @Override
+    public Item updateItem(Item item, long itemId) {
         items.put(itemId, item);
         return items.get(itemId);
     }
@@ -30,5 +40,19 @@ public class ItemStorageImpl implements ItemStorage {
     @Override
     public Collection<Item> getAllItems() {
         return items.values();
+    }
+
+    @Override
+    public void setItemsByOwner(long userId, List<Long> itemsList) {
+        itemsByOwner.put(userId, itemsList);
+    }
+
+    @Override
+    public List<Long> getItemsByOwner(long ownerId) {
+        return itemsByOwner.get(ownerId);
+    }
+
+    private long generateId() {
+        return ++id;
     }
 }
