@@ -9,7 +9,7 @@ import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
-import ru.practicum.shareit.user.storage.UserStorage;
+import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,8 +18,9 @@ import java.util.Collection;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-    private final UserStorage userStorage;
+    private final UserRepository userRepository;
     private final UserMapper userMapper;
+
 
     @Override
     public UserDto addUser(UserDto userDto) {
@@ -32,21 +33,21 @@ public class UserServiceImpl implements UserService {
             throw new ValidationException("name is empty");
         }
         User user = userMapper.dtoToUser(userDto);
-        long userId = user.getId();
-        if (checkEmail(email, userId)) {
+        Long userId = user.getId();
+        if (userId != null && checkEmail(email, userId)) {
             log.info("email " + email + " already exist");
             throw new EmailAlreadyExistException("email " + email + " already exist");
         }
-        User userSaved = userStorage.save(user);
+        User userSaved = userRepository.save(user);
         return userMapper.userToDto(userSaved);
     }
 
     @Override
-    public UserDto updateUser(UserDto userDto, long userId) {
+    public UserDto updateUser(UserDto userDto, Long userId) {
         checkUserId(userId);
         String nameNew = userDto.getName();
         String emailNew = userDto.getEmail();
-        User user = userStorage.findUserById(userId);
+        User user = userRepository.findById(userId).orElse(null);
         if (emailNew != null) {
             if (checkEmail(emailNew, userId)) {
                 log.info("email " + emailNew + " already exist");
@@ -57,26 +58,26 @@ public class UserServiceImpl implements UserService {
         if (nameNew != null) {
             user.setName(nameNew);
         }
-        User userSaved = userStorage.updateUser(user, userId);
+        User userSaved = userRepository.save(user);
         return userMapper.userToDto(userSaved);
     }
 
     @Override
-    public UserDto getUserById(long userId) {
+    public UserDto getUserById(Long userId) {
         checkUserId(userId);
-        User user = userStorage.getUserById(userId);
+        User user = userRepository.findById(userId).orElse(null);
         return userMapper.userToDto(user);
     }
 
     @Override
-    public void deleteUser(long userId) {
+    public void deleteUser(Long userId) {
         checkUserId(userId);
-        userStorage.deleteUser(userId);
+        userRepository.deleteById(userId);
     }
 
     @Override
     public Collection<UserDto> getAllUsers() {
-        Collection<User> users = userStorage.findAll().values();
+        Collection<User> users = userRepository.findAll();
         Collection<UserDto> usersDto = new ArrayList<>();
         for (User user : users) {
             usersDto.add(userMapper.userToDto(user));
@@ -84,14 +85,8 @@ public class UserServiceImpl implements UserService {
         return usersDto;
     }
 
-    @Override
-    public void addItem(long itemId, long userId) {
-        checkUserId(userId);
-        userStorage.getUserById(userId).getItemsList().add(itemId);
-    }
-
-    public boolean checkUserId(long userId) {
-        if (userStorage.findAll().containsKey(userId)) {
+    private boolean checkUserId(Long userId) {
+        if (userRepository.findById(userId).isPresent()) {
             return true;
         } else {
             log.info("User " + userId + " not found");
@@ -99,8 +94,8 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private boolean checkEmail(String email, long userId) {
-        for (User user : userStorage.findAll().values()) {
+    private boolean checkEmail(String email, Long userId) {
+        for (User user : userRepository.findAll()) {
             if (user.getEmail().equals(email)) {
                 if (user.getId() == userId) {
                     continue;
