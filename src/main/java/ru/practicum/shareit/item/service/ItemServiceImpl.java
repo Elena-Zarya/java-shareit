@@ -164,8 +164,8 @@ public class ItemServiceImpl implements ItemService {
         ItemDto item = getItemById(itemId, userId);
         Collection<Booking> bookingsByUser = bookingRepository.findAllBookingByBookerIdAndEndBeforeOrderByStartDesc(
                 userId, LocalDateTime.now());
-        List<Booking> bookingsByUserByItem = bookingsByUser.stream().filter(booking -> Objects.equals(booking.getItem().
-                getId(), itemId)).collect(Collectors.toList());
+        List<Booking> bookingsByUserByItem = bookingsByUser.stream().filter(booking -> Objects.equals(booking.getItem()
+                        .getId(), itemId)).collect(Collectors.toList());
         if (bookingsByUserByItem.isEmpty()) {
             log.info("item not found");
             throw new InvalidRequestException("item not found");
