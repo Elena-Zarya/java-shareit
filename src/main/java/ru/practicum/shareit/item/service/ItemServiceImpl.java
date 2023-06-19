@@ -25,10 +25,7 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -78,7 +75,8 @@ public class ItemServiceImpl implements ItemService {
         String descriptionNew = itemDto.getDescription();
         Boolean availableNew = itemDto.getAvailable();
         Item item = itemRepository.findById(itemId).orElse(null);
-        if (item.getOwner().getId() == ownerId) {
+        assert item != null;
+        if (Objects.equals(item.getOwner().getId(), ownerId)) {
             if (descriptionNew != null) {
                 item.setDescription(descriptionNew);
             }
@@ -114,7 +112,7 @@ public class ItemServiceImpl implements ItemService {
             }
         }
         itemDto.setComments(commentsDto);
-        if (userId == itemDto.getOwner().getId()) {
+        if (Objects.equals(userId, itemDto.getOwner().getId())) {
             addLastBookingAndNextBooking(itemDto);
         }
         return itemDto;
@@ -166,8 +164,8 @@ public class ItemServiceImpl implements ItemService {
         ItemDto item = getItemById(itemId, userId);
         Collection<Booking> bookingsByUser = bookingRepository.findAllBookingByBookerIdAndEndBeforeOrderByStartDesc(
                 userId, LocalDateTime.now());
-        List<Booking> bookingsByUserByItem = bookingsByUser.stream().filter(booking -> booking.getItem().getId() ==
-                itemId).collect(Collectors.toList());
+        List<Booking> bookingsByUserByItem = bookingsByUser.stream().filter(booking -> Objects.equals(booking.getItem().
+                getId(), itemId)).collect(Collectors.toList());
         if (bookingsByUserByItem.isEmpty()) {
             log.info("item not found");
             throw new InvalidRequestException("item not found");

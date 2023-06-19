@@ -13,6 +13,7 @@ import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -97,7 +98,7 @@ public class UserServiceImpl implements UserService {
     private boolean checkEmail(String email, Long userId) {
         for (User user : userRepository.findAll()) {
             if (user.getEmail().equals(email)) {
-                if (user.getId() == userId) {
+                if (Objects.equals(user.getId(), userId)) {
                     continue;
                 }
                 return true;

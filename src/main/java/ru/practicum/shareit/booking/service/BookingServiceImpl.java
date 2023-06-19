@@ -22,6 +22,7 @@ import ru.practicum.shareit.user.service.UserService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -50,7 +51,7 @@ public class BookingServiceImpl implements BookingService {
             throw new ValidationException("booking date error");
         }
         ItemDto item = itemService.getItemById(itemId, userId);
-        if (item.getOwner().getId() == userId) {
+        if (Objects.equals(item.getOwner().getId(), userId)) {
             log.info("create from owner to item " + itemId);
             throw new NotFoundException("create from owner to item " + itemId);
         }
@@ -70,7 +71,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponseDto updateStatus(Long bookingId, Long userId, boolean approved) {
         Booking booking = checkBooking(bookingId);
-        if (booking.getItem().getOwner().getId() == userId) {
+        if (Objects.equals(booking.getItem().getOwner().getId(), userId)) {
             if (booking.getStatus().equals(Status.APPROVED)) {
                 log.info("change status by user " + userId + " after approve");
                 throw new StatusException("change status by user " + userId + " after approve");
@@ -91,7 +92,8 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponseDto getBookingById(Long bookingId, Long userId) {
         Booking booking = checkBooking(bookingId);
-        if (booking.getBooker().getId() == userId || booking.getItem().getOwner().getId() == userId) {
+        if (Objects.equals(booking.getBooker().getId(), userId) || Objects.equals(booking.getItem().getOwner().getId(),
+                userId)) {
             return bookingMapper.bookingToDto(booking);
         } else {
             log.info("no bookings found for the user " + userId);
