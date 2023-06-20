@@ -3,6 +3,7 @@ package ru.practicum.shareit.item.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.Status;
 import ru.practicum.shareit.booking.dto.BookingDtoForItem;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final BookingRepository bookingRepository;
@@ -41,6 +43,7 @@ public class ItemServiceImpl implements ItemService {
     private final BookingMapper bookingMapper;
     private final CommentMapper commentMapper;
 
+    @Transactional
     @Override
     public ItemDto addItem(ItemDto itemDto, Long ownerId) {
         String description = itemDto.getDescription();
@@ -69,6 +72,7 @@ public class ItemServiceImpl implements ItemService {
         return itemMapper.itemToDto(itemSaved);
     }
 
+    @Transactional
     @Override
     public ItemDto updateItem(ItemDto itemDto, Long itemId, Long ownerId) {
         String nameNew = itemDto.getName();
@@ -104,7 +108,7 @@ public class ItemServiceImpl implements ItemService {
         List<Comment> comments = commentRepository.findAllCommentByItemIdOrderByIdAsc(itemId);
         ItemDto itemDto = itemMapper.itemToDto(item.get());
         List<CommentDto> commentsDto = new ArrayList<>();
-        if (comments.size() != 0) {
+        if (!comments.isEmpty()) {
             for (Comment comment : comments) {
                 CommentDto commentDto = commentMapper.commentToDto(comment);
                 commentDto.setAuthorName(comment.getAuthor().getName());
@@ -148,7 +152,6 @@ public class ItemServiceImpl implements ItemService {
         }
         if (allItemsByDescription != null) {
             for (Item item : allItemsByDescription) {
-                assert allItemsByName != null;
                 if (!allItemsByName.contains(item)) {
                     itemsByText.add(itemMapper.itemToDto(item));
                 }
@@ -157,6 +160,7 @@ public class ItemServiceImpl implements ItemService {
         return itemsByText;
     }
 
+    @Transactional
     @Override
     public CommentDto createComment(CommentDto commentDto, Long userId, Long itemId) {
         UserDto userDto = userService.getUserById(userId);
@@ -191,7 +195,7 @@ public class ItemServiceImpl implements ItemService {
         Long itemId = itemDto.getId();
         List<Booking> lastBookingsByItem = bookingRepository.findBookingByItemIdAndStartIsBeforeAndStatusOrderByStartAsc(
                 itemId, LocalDateTime.now(), Status.APPROVED);
-        if (lastBookingsByItem.size() > 0) {
+        if (!lastBookingsByItem.isEmpty()) {
             Booking lastBooking = lastBookingsByItem.get(lastBookingsByItem.size() - 1);
 
             BookingDtoForItem lastBookingDto = bookingMapper.bookingToDtoForItem(lastBooking);

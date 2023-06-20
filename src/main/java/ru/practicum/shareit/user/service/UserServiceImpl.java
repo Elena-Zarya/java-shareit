@@ -3,6 +3,7 @@ package ru.practicum.shareit.user.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.EmailAlreadyExistException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -18,11 +19,13 @@ import java.util.Objects;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
 
+    @Transactional
     @Override
     public UserDto addUser(UserDto userDto) {
         String email = userDto.getEmail();
@@ -43,6 +46,7 @@ public class UserServiceImpl implements UserService {
         return userMapper.userToDto(userSaved);
     }
 
+    @Transactional
     @Override
     public UserDto updateUser(UserDto userDto, Long userId) {
         checkUserId(userId);
@@ -70,6 +74,7 @@ public class UserServiceImpl implements UserService {
         return userMapper.userToDto(user);
     }
 
+    @Transactional
     @Override
     public void deleteUser(Long userId) {
         checkUserId(userId);

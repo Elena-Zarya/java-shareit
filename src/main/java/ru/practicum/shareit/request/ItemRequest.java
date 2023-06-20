@@ -1,6 +1,7 @@
 package ru.practicum.shareit.request;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
@@ -8,7 +9,8 @@ import javax.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "requests")
-@Data
+@Getter
+@Setter
 public class ItemRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

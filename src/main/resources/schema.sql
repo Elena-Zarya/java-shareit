@@ -29,7 +29,7 @@ create TABLE IF NOT EXISTS bookings (
   end_date TIMESTAMP WITHOUT TIME ZONE,
   item_id BIGINT NOT NULL REFERENCES items (id) ON delete CASCADE ON update CASCADE,
   booker_id BIGINT NOT NULL REFERENCES users (id) ON delete CASCADE ON update CASCADE,
-  status VARCHAR(512),
+  status VARCHAR(512) NOT NULL,
   CONSTRAINT pk_bookings PRIMARY KEY (id)
 );
 
