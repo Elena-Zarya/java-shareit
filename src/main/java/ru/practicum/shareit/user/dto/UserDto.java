@@ -1,18 +1,17 @@
 package ru.practicum.shareit.user.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Email;
-import java.util.ArrayList;
-import java.util.List;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserDto {
-    private long id;
+    private Long id;
     private String name;
     @Email
     private String email;
-    @JsonIgnore
-    private final List<Long> itemsList = new ArrayList<>();
 }
