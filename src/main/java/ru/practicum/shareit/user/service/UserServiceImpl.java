@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.EmailAlreadyExistException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
@@ -24,24 +23,10 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-
     @Transactional
     @Override
     public UserDto addUser(UserDto userDto) {
-        String email = userDto.getEmail();
-        String name = userDto.getName();
-        if (email == null) {
-            throw new ValidationException("email is empty");
-        }
-        if (name == null) {
-            throw new ValidationException("name is empty");
-        }
         User user = userMapper.dtoToUser(userDto);
-        Long userId = user.getId();
-        if (userId != null && checkEmail(email, userId)) {
-            log.info("email " + email + " already exist");
-            throw new EmailAlreadyExistException("email " + email + " already exist");
-        }
         User userSaved = userRepository.save(user);
         return userMapper.userToDto(userSaved);
     }
@@ -53,14 +38,14 @@ public class UserServiceImpl implements UserService {
         String nameNew = userDto.getName();
         String emailNew = userDto.getEmail();
         User user = userRepository.findById(userId).orElse(null);
-        if (emailNew != null) {
+        if (emailNew != null && !emailNew.isEmpty()) {
             if (checkEmail(emailNew, userId)) {
                 log.info("email " + emailNew + " already exist");
                 throw new EmailAlreadyExistException("email " + emailNew + " already exist");
             }
             user.setEmail(emailNew);
         }
-        if (nameNew != null) {
+        if (nameNew != null && !nameNew.isEmpty()) {
             user.setName(nameNew);
         }
         User userSaved = userRepository.save(user);
