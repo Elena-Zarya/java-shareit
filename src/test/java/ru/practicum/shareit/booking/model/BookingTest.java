@@ -77,4 +77,22 @@ class BookingTest {
         Status statusSaved = booking.getStatus();
         assertEquals(status, statusSaved);
     }
+
+    @Test
+    void testEquals() {
+        Booking booking1 = new Booking();
+        booking1.setId(booking.getId());
+        booking1.setStatus(booking.getStatus());
+        booking1.setStart(booking.getStart());
+        booking1.setEnd(booking.getEnd());
+        booking1.setBooker(booking.getBooker());
+
+        assertTrue(booking.equals(booking1));
+    }
+
+    @Test
+    void testHashCode() {
+        booking.setId(1L);
+        assertTrue(booking.hashCode() > 0);
+    }
 }

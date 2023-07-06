@@ -61,4 +61,22 @@ class CommentTest {
         LocalDateTime created2 = comment.getCreated();
         assertEquals(created, created2);
     }
+
+    @Test
+    void equals() {
+        Comment comment1 = new Comment();
+        comment1.setId(comment.getId());
+        comment1.setCreated(comment.getCreated());
+        comment1.setAuthor(comment.getAuthor());
+        comment1.setText(comment.getText());
+        comment1.setItem(comment.getItem());
+
+        assertTrue(comment.equals(comment1));
+    }
+
+    @Test
+    void testHashCode() {
+        comment.setId(1L);
+        assertTrue(comment.hashCode() > 0);
+    }
 }

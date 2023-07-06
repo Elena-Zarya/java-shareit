@@ -52,4 +52,21 @@ class ItemRequestTest {
         LocalDateTime cretedSaved = itemRequest.getCreated();
         assertEquals(created, cretedSaved);
     }
+
+    @Test
+    void equals() {
+        ItemRequest itemRequest1 = new ItemRequest();
+        itemRequest1.setId(itemRequest.getId());
+        itemRequest1.setCreated(itemRequest.getCreated());
+        itemRequest1.setRequestor(itemRequest.getRequestor());
+        itemRequest1.setDescription(itemRequest.getDescription());
+
+        assertTrue(itemRequest.equals(itemRequest1));
+    }
+
+    @Test
+    void testHashCode() {
+        itemRequest.setId(1L);
+        assertTrue(itemRequest.hashCode() > 0);
+    }
 }

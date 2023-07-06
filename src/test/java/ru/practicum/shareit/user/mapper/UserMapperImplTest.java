@@ -33,10 +33,22 @@ class UserMapperImplTest {
     }
 
     @Test
+    void dtoToUserShouldReturnNull() {
+        User userSaved = userMapper.dtoToUser(null);
+        assertEquals(null, userSaved);
+    }
+
+    @Test
     void userToDto() {
         UserDto userDtoSaved = userMapper.userToDto(user);
         assertEquals(1L, userDtoSaved.getId());
         assertEquals("name", userDtoSaved.getName());
         assertEquals("user@email.com", userDtoSaved.getEmail());
+    }
+
+    @Test
+    void userToDtoShouldReturnNull() {
+        UserDto userDtoSaved = userMapper.userToDto(null);
+        assertEquals(null, userDtoSaved);
     }
 }

@@ -68,4 +68,23 @@ class ItemTest {
         ItemRequest itemRequest = item.getRequest();
         assertEquals(request, itemRequest);
     }
+
+    @Test
+    void equals() {
+        Item item1 = new Item();
+        item1.setId(item.getId());
+        item1.setRequest(item.getRequest());
+        item1.setOwner(item.getOwner());
+        item1.setAvailable(item.getAvailable());
+        item1.setName(item.getName());
+        item1.setDescription(item.getDescription());
+
+        assertTrue(item.equals(item1));
+    }
+
+    @Test
+    void testHashCode() {
+        item.setId(1L);
+        assertTrue(item.hashCode() > 0);
+    }
 }

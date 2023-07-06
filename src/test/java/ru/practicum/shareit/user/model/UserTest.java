@@ -33,4 +33,20 @@ class UserTest {
         String email = user.getEmail();
         assertEquals("user@email.com", email);
     }
+
+    @Test
+    void equals() {
+        User user1 = new User();
+        user1.setId(user.getId());
+        user1.setEmail(user.getEmail());
+        user1.setName(user.getName());
+
+        assertTrue(user.equals(user1));
+    }
+
+    @Test
+    void testHashCode() {
+        user.setId(1L);
+        assertTrue(user.hashCode() > 0);
+    }
 }
