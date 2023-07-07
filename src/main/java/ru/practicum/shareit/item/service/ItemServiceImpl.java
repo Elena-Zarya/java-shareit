@@ -2,7 +2,6 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +12,6 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.InvalidRequestException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.mapper.CommentMapper;
@@ -22,6 +20,7 @@ import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.item.repository.Pages;
 import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.dto.UserDto;
@@ -117,12 +116,10 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Collection<ItemDto> getAllItemByUser(Long ownerId, int from, int size) {
-        if (from < 0 || size < 1) {
-            log.info("invalid parameters for pagination");
-            throw new ValidationException("invalid parameters for pagination");
-        }
+
+        Pageable page = Pages.getPage(from, size);
+
         UserDto owner = userService.getUserById(ownerId);
-        Pageable page = PageRequest.of(from > 0 ? from / size : 0, size);
         List<Item> itemsList = itemRepository.findAllByOwnerIdOrderByIdAsc(ownerId, page);
         return itemsList.stream()
                 .map(itemMapper::itemToDto)
@@ -132,11 +129,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Collection<ItemDto> findItemsByText(String text, int from, int size) {
-        if (from < 0 || size < 1) {
-            log.info("invalid parameters for pagination");
-            throw new ValidationException("invalid parameters for pagination");
-        }
-        Pageable page = PageRequest.of(from > 0 ? from / size : 0, size);
+
+        Pageable page = Pages.getPage(from, size);
+
         Collection<ItemDto> itemsByText = new ArrayList<>();
         if (text.isEmpty()) {
             return itemsByText;

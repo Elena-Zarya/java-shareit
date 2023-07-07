@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.repository.Pages;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.mapper.ItemRequestMapper;
@@ -83,12 +84,9 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public Collection<ItemRequestDto> findAllItemRequest(long userId, int from, int size) {
-        if (from < 0 || size < 1) {
-            log.info("invalid parameters for pagination");
-            throw new ValidationException("invalid parameters for pagination");
-        }
         Sort sortByCreated = Sort.by(Sort.Direction.DESC, "created");
-        PageRequest page = PageRequest.of(from > 0 ? from / size : 0, size, sortByCreated);
+
+        PageRequest page = Pages.getPage(from, size, sortByCreated);
 
         List<ItemRequestDto> allItemRequests = itemRequestRepository.findAll(userId, page).stream()
                 .map(itemRequestMapper::itemRequestToDto)

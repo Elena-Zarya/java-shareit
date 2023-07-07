@@ -2,7 +2,6 @@ package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +16,7 @@ import ru.practicum.shareit.exception.StatusException;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
+import ru.practicum.shareit.item.repository.Pages;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
@@ -107,11 +107,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public Collection<BookingResponseDto> findAllBookingsByUser(Long userId, String state, int from, int size) {
-        if (from < 0 || size < 1) {
-            log.info("invalid parameters for pagination");
-            throw new ValidationException("invalid parameters for pagination");
-        }
-        Pageable page = PageRequest.of(from > 0 ? from / size : 0, size);
+        Pageable page = Pages.getPage(from, size);
 
         UserDto user = userService.getUserById(userId);
         List<Booking> bookings;
@@ -147,11 +143,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public Collection<BookingResponseDto> findAllBookingsByOwner(Long ownerId, String state, int from, int size) {
-        if (from < 0 || size < 1) {
-            log.info("invalid parameters for pagination");
-            throw new ValidationException("invalid parameters for pagination");
-        }
-        Pageable page = PageRequest.of(from > 0 ? from / size : 0, size);
+        Pageable page = Pages.getPage(from, size);
 
         UserDto user = userService.getUserById(ownerId);
         List<Booking> bookings;
