@@ -116,7 +116,6 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Collection<ItemDto> getAllItemByUser(Long ownerId, int from, int size) {
-
         Pageable page = Pages.getPage(from, size);
 
         UserDto owner = userService.getUserById(ownerId);
@@ -129,7 +128,6 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Collection<ItemDto> findItemsByText(String text, int from, int size) {
-
         Pageable page = Pages.getPage(from, size);
 
         Collection<ItemDto> itemsByText = new ArrayList<>();

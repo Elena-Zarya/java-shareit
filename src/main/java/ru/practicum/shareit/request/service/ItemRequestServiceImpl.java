@@ -85,7 +85,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     @Override
     public Collection<ItemRequestDto> findAllItemRequest(long userId, int from, int size) {
         Sort sortByCreated = Sort.by(Sort.Direction.DESC, "created");
-
         PageRequest page = Pages.getPage(from, size, sortByCreated);
 
         List<ItemRequestDto> allItemRequests = itemRequestRepository.findAll(userId, page).stream()
