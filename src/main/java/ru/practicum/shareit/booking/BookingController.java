@@ -41,15 +41,19 @@ public class BookingController {
 
     @GetMapping
     public Collection<BookingResponseDto> findAllBookingsByUser(@RequestHeader("X-Sharer-User-Id") long userId,
-                                                                @RequestParam(defaultValue = "ALL") String state) {
+                                                                @RequestParam(defaultValue = "ALL") String state,
+                                                                @RequestParam(defaultValue = "0") int from,
+                                                                @RequestParam(defaultValue = "10") int size) {
         log.info("Received GET request: get all booking by user {}", userId);
-        return bookingService.findAllBookingsByUser(userId, state);
+        return bookingService.findAllBookingsByUser(userId, state, from, size);
     }
 
     @GetMapping("/owner")
     public Collection<BookingResponseDto> findAllBookingsByOwner(@RequestHeader("X-Sharer-User-Id") long ownerId,
-                                                                 @RequestParam(defaultValue = "ALL") String state) {
+                                                                 @RequestParam(defaultValue = "ALL") String state,
+                                                                 @RequestParam(defaultValue = "0") int from,
+                                                                 @RequestParam(defaultValue = "10") int size) {
         log.info("Received GET request: get all booking by owner {}", ownerId);
-        return bookingService.findAllBookingsByOwner(ownerId, state);
+        return bookingService.findAllBookingsByOwner(ownerId, state, from, size);
     }
 }

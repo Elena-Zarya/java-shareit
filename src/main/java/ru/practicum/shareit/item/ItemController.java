@@ -24,7 +24,7 @@ public class ItemController {
     }
 
     @PatchMapping("/{itemId}")
-    public ItemDto updateItem(@Valid @RequestBody ItemDto itemDto, @PathVariable("itemId") Long itemId,
+    public ItemDto updateItem(@RequestBody ItemDto itemDto, @PathVariable("itemId") Long itemId,
                               @RequestHeader("X-Sharer-User-Id") long ownerId) {
         log.info("Received PATCH request: update item id {}", itemId);
         return itemService.updateItem(itemDto, itemId, ownerId);
@@ -37,15 +37,19 @@ public class ItemController {
     }
 
     @GetMapping
-    public Collection<ItemDto> getAllItemByUser(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
+    public Collection<ItemDto> getAllItemByUser(@RequestHeader("X-Sharer-User-Id") Long ownerId,
+                                                @RequestParam(defaultValue = "0") int from,
+                                                @RequestParam(defaultValue = "10") int size) {
         log.info("Received GET request: get all item by owner {}", ownerId);
-        return itemService.getAllItemByUser(ownerId);
+        return itemService.getAllItemByUser(ownerId, from, size);
     }
 
     @GetMapping("/search")
-    public Collection<ItemDto> findItemsByText(@Valid @RequestParam("text") String text) {
+    public Collection<ItemDto> findItemsByText(@RequestParam("text") String text,
+                                               @RequestParam(defaultValue = "0") int from,
+                                               @RequestParam(defaultValue = "10") int size) {
         log.info("Received GET request: get all item by text {}", text);
-        return itemService.findItemsByText(text);
+        return itemService.findItemsByText(text, from, size);
     }
 
     @PostMapping("/{itemId}/comment")

@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.Status;
@@ -11,7 +12,6 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.InvalidRequestException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.mapper.CommentMapper;
@@ -20,6 +20,9 @@ import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.item.repository.Pages;
+import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
@@ -38,6 +41,7 @@ public class ItemServiceImpl implements ItemService {
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
     private final UserService userService;
+    private final ItemRequestRepository itemRequestRepository;
     private final UserMapper userMapper;
     private final ItemMapper itemMapper;
     private final BookingMapper bookingMapper;
@@ -46,30 +50,23 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     @Override
     public ItemDto addItem(ItemDto itemDto, Long ownerId) {
-        String description = itemDto.getDescription();
-        String name = itemDto.getName();
-        Boolean available = itemDto.getAvailable();
-        if (description == null || description.isEmpty()) {
-            log.info("description is empty");
-            throw new ValidationException("description is empty");
-        }
-        if (name == null || name.isEmpty()) {
-            log.info("name is empty");
-            throw new ValidationException("name is empty");
-        }
-        if (available == null) {
-            log.info("available is empty");
-            throw new ValidationException("available is empty");
-        }
-        if (ownerId == 0) {
-            log.info("owner of the item is not specified");
-            throw new ValidationException("owner of the item is not specified");
-        }
+        Long requestId = itemDto.getRequestId();
         UserDto owner = userService.getUserById(ownerId);
         itemDto.setOwner(owner);
         Item item = itemMapper.dtoToItem(itemDto);
+        if (requestId != null) {
+            Optional<ItemRequest> itemRequest = itemRequestRepository.findById(requestId);
+            if (itemRequest.isEmpty()) {
+                throw new NotFoundException("itemRequest " + requestId + " not found");
+            }
+            item.setRequest(itemRequest.get());
+        }
         Item itemSaved = itemRepository.save(item);
-        return itemMapper.itemToDto(itemSaved);
+        ItemDto itemDtoSaved = itemMapper.itemToDto(itemSaved);
+        if (itemSaved.getRequest() != null) {
+            itemDtoSaved.setRequestId(itemSaved.getRequest().getId());
+        }
+        return itemDtoSaved;
     }
 
     @Transactional
@@ -78,8 +75,7 @@ public class ItemServiceImpl implements ItemService {
         String nameNew = itemDto.getName();
         String descriptionNew = itemDto.getDescription();
         Boolean availableNew = itemDto.getAvailable();
-        Item item = itemRepository.findById(itemId).orElse(null);
-        assert item != null;
+        Item item = itemRepository.findById(itemId).orElseThrow(() -> new NotFoundException("item not found"));
         if (Objects.equals(item.getOwner().getId(), ownerId)) {
             if (descriptionNew != null) {
                 item.setDescription(descriptionNew);
@@ -100,13 +96,9 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto getItemById(Long itemId, Long userId) {
-        Optional<Item> item = itemRepository.findById(itemId);
-        if (item.isEmpty()) {
-            log.info("Item " + itemId + " not found");
-            throw new NotFoundException("Item " + itemId + " not found");
-        }
+        Item item = itemRepository.findById(itemId).orElseThrow(() -> new NotFoundException("item not found"));
         List<Comment> comments = commentRepository.findAllCommentByItemIdOrderByIdAsc(itemId);
-        ItemDto itemDto = itemMapper.itemToDto(item.get());
+        ItemDto itemDto = itemMapper.itemToDto(item);
         List<CommentDto> commentsDto = new ArrayList<>();
         if (!comments.isEmpty()) {
             for (Comment comment : comments) {
@@ -123,28 +115,28 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Collection<ItemDto> getAllItemByUser(Long ownerId) {
-        Collection<ItemDto> itemsByOwner = new ArrayList<>();
-        List<Item> itemsList = itemRepository.findAllByOwnerIdOrderByIdAsc(ownerId);
-        if (itemsList != null) {
-            for (Item item : itemsList) {
-                ItemDto itemDto = itemMapper.itemToDto(item);
-                addLastBookingAndNextBooking(itemDto);
-                itemsByOwner.add(itemDto);
-            }
-        }
-        return itemsByOwner;
+    public Collection<ItemDto> getAllItemByUser(Long ownerId, int from, int size) {
+        Pageable page = Pages.getPage(from, size);
+
+        UserDto owner = userService.getUserById(ownerId);
+        List<Item> itemsList = itemRepository.findAllByOwnerIdOrderByIdAsc(ownerId, page);
+        return itemsList.stream()
+                .map(itemMapper::itemToDto)
+                .map(this::addLastBookingAndNextBooking)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public Collection<ItemDto> findItemsByText(String text) {
+    public Collection<ItemDto> findItemsByText(String text, int from, int size) {
+        Pageable page = Pages.getPage(from, size);
+
         Collection<ItemDto> itemsByText = new ArrayList<>();
         if (text.isEmpty()) {
-            return new ArrayList<>();
+            return itemsByText;
         }
-        Collection<Item> allItemsByName = itemRepository.findAllByNameContainingIgnoreCaseAndAvailable(text, true);
-        Collection<Item> allItemsByDescription = itemRepository.findAllByDescriptionContainingIgnoreCaseAndAvailable(
-                text, true);
+        List<Item> allItemsByName = itemRepository.findAllByNameContainingIgnoreCaseAndAvailable(text, true, page);
+        List<Item> allItemsByDescription = itemRepository.findAllByDescriptionContainingIgnoreCaseAndAvailable(
+                text, true, page);
         if (allItemsByName != null) {
             for (Item item : allItemsByName) {
                 itemsByText.add(itemMapper.itemToDto(item));
@@ -166,10 +158,11 @@ public class ItemServiceImpl implements ItemService {
         UserDto userDto = userService.getUserById(userId);
         User user = userMapper.dtoToUser(userDto);
         ItemDto item = getItemById(itemId, userId);
+        LocalDateTime created = LocalDateTime.now();
         Collection<Booking> bookingsByUser = bookingRepository.findAllBookingByBookerIdAndEndBeforeOrderByStartDesc(
-                userId, LocalDateTime.now());
+                userId, created);
         List<Booking> bookingsByUserByItem = bookingsByUser.stream().filter(booking -> Objects.equals(booking.getItem()
-                        .getId(), itemId)).collect(Collectors.toList());
+                .getId(), itemId)).collect(Collectors.toList());
         if (bookingsByUserByItem.isEmpty()) {
             log.info("item not found");
             throw new InvalidRequestException("item not found");
@@ -189,6 +182,20 @@ public class ItemServiceImpl implements ItemService {
         CommentDto commentDtoSaved = commentMapper.commentToDto(commentSaved);
         commentDtoSaved.setAuthorName(commentSaved.getAuthor().getName());
         return commentDtoSaved;
+    }
+
+    @Override
+    public List<ItemDto> getItemsByRequest(long requestId) {
+        List<ItemDto> itemsByRequest = new ArrayList<>();
+        List<Item> itemsList = itemRepository.findAllByRequestIdOrderById(requestId);
+        if (itemsList != null) {
+            for (Item item : itemsList) {
+                ItemDto itemToRequestDto = itemMapper.itemToDto(item);
+                itemToRequestDto.setRequestId(item.getRequest().getId());
+                itemsByRequest.add(itemToRequestDto);
+            }
+        }
+        return itemsByRequest;
     }
 
     private ItemDto addLastBookingAndNextBooking(ItemDto itemDto) {
