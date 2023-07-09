@@ -38,7 +38,7 @@ public class UserClient extends BaseClient {
     }
 
     public ResponseEntity<Object> deleteUser(long userId) {
-       return delete("/" + userId, userId);
+        return delete("/" + userId, userId);
     }
 
     public ResponseEntity<Object> getAllUsers() {

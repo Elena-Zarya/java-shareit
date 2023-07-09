@@ -1,6 +1,5 @@
 package ru.practicum.shareit.user.mapper;
 
-//import org.mapstruct.Mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import ru.practicum.shareit.user.dto.UserDto;
