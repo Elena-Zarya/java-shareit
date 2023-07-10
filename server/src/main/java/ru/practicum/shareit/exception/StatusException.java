@@ -1,4 +1,4 @@
-package ru.practicum.shareit.excеption;
+package ru.practicum.shareit.exception;
 
 public class StatusException extends RuntimeException {
     public StatusException(String message) {
