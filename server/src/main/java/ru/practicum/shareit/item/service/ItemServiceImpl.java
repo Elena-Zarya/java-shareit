@@ -87,7 +87,9 @@ public class ItemServiceImpl implements ItemService {
                 item.setAvailable(availableNew);
             }
             Item itemSaved = itemRepository.save(item);
-            return itemMapper.itemToDto(itemSaved);
+            ItemDto itemDtoNew = itemMapper.itemToDto(itemSaved);
+            addLastBookingAndNextBooking(itemDtoNew);
+            return itemDtoNew;
         } else {
             log.info("user is not the owner of the item");
             throw new NotFoundException("user is not the owner of the item");
@@ -120,10 +122,14 @@ public class ItemServiceImpl implements ItemService {
 
         UserDto owner = userService.getUserById(ownerId);
         List<Item> itemsList = itemRepository.findAllByOwnerIdOrderByIdAsc(ownerId, page);
-        return itemsList.stream()
-                .map(itemMapper::itemToDto)
-                .map(this::addLastBookingAndNextBooking)
-                .collect(Collectors.toList());
+
+        List<ItemDto> itemDtoList = new ArrayList<>();
+        for(Item item: itemsList){
+            ItemDto itemDto = itemMapper.itemToDto(item);
+            addLastBookingAndNextBooking(itemDto);
+            itemDtoList.add(itemDto);
+        }
+        return itemDtoList;
     }
 
     @Override
@@ -149,6 +155,9 @@ public class ItemServiceImpl implements ItemService {
                 }
             }
         }
+        for(ItemDto itemDto: itemsByText){
+            addLastBookingAndNextBooking(itemDto);
+        }
         return itemsByText;
     }
 
@@ -158,6 +167,7 @@ public class ItemServiceImpl implements ItemService {
         UserDto userDto = userService.getUserById(userId);
         User user = userMapper.dtoToUser(userDto);
         ItemDto item = getItemById(itemId, userId);
+        addLastBookingAndNextBooking(item);
         LocalDateTime created = LocalDateTime.now();
         Collection<Booking> bookingsByUser = bookingRepository.findAllBookingByBookerIdAndEndBeforeOrderByStartDesc(
                 userId, created);
@@ -192,6 +202,7 @@ public class ItemServiceImpl implements ItemService {
             for (Item item : itemsList) {
                 ItemDto itemToRequestDto = itemMapper.itemToDto(item);
                 itemToRequestDto.setRequestId(item.getRequest().getId());
+                addLastBookingAndNextBooking(itemToRequestDto);
                 itemsByRequest.add(itemToRequestDto);
             }
         }
