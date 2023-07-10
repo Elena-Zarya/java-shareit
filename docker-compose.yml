@@ -23,8 +23,8 @@ services:
       - db
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/shareit
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=1234
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
       - JAVA_TOOL_OPTIONS=-Duser.timezone=Europe/Moscow
     restart: on-failure
 
@@ -37,6 +37,6 @@ services:
       - /var/lib/postgresql/data/
     environment:
       - POSTGRES_DB=shareit
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=1234
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
       - JAVA_TOOL_OPTIONS=-Duser.timezone=Europe/Moscow
