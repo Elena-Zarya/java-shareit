@@ -124,7 +124,7 @@ public class ItemServiceImpl implements ItemService {
         List<Item> itemsList = itemRepository.findAllByOwnerIdOrderByIdAsc(ownerId, page);
 
         List<ItemDto> itemDtoList = new ArrayList<>();
-        for(Item item: itemsList){
+        for (Item item : itemsList) {
             ItemDto itemDto = itemMapper.itemToDto(item);
             addLastBookingAndNextBooking(itemDto);
             itemDtoList.add(itemDto);
@@ -155,7 +155,7 @@ public class ItemServiceImpl implements ItemService {
                 }
             }
         }
-        for(ItemDto itemDto: itemsByText){
+        for (ItemDto itemDto : itemsByText) {
             addLastBookingAndNextBooking(itemDto);
         }
         return itemsByText;
